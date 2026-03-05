@@ -1,6 +1,6 @@
 {
   "name": "workflow-toolkit",
-  "description": "A comprehensive developer workflow toolkit for Claude Code. Includes session journaling (SQLite-backed), local task tracking, GitHub issue sync/triage, knowledge base distillation, contribution checks, PR preparation, and skill/agent scaffolding. Everything you need to run a structured, observable development workflow.",
+  "description": "Get up to speed in any codebase, any size. Non-opinionated workflow plugin with session journaling, local task tracking, GitHub issue sync, knowledge base generation, and lifecycle hooks. All backed by SQLite, all local.",
   "version": "1.0.0",
   "author": {
     "name": "Doug Silkstone",
@@ -8,7 +8,7 @@
   },
   "homepage": "https://github.com/dougwithseismic/workflow-toolkit",
   "repository": "https://github.com/dougwithseismic/workflow-toolkit",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "keywords": [
     "journal",
     "task-tracking",
