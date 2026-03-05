@@ -291,6 +291,21 @@ Workflow Toolkit is a non-opinionated workflow plugin. It journals sessions auto
 
 ---
 
+### setup
+
+**What it does:** Verifies and initializes the workflow-toolkit environment. Checks SQLite, creates the journal database, verifies directory structure, checks gh CLI auth, and reports overall readiness.
+
+**When to use it:** After installing the plugin for the first time, or when troubleshooting issues.
+
+**Examples:**
+- "Set up workflow toolkit"
+- "Initialize the plugin"
+- "Check if everything is working"
+- `/workflow-toolkit:setup`
+- `/workflow-toolkit:setup --force` (re-initialize database)
+
+---
+
 ### db-viewer
 
 **What it does:** Opens the journal SQLite database in a GUI viewer (DB Browser for SQLite or similar).
