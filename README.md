@@ -1,8 +1,8 @@
 # Workflow Toolkit
 
-**A structured development workflow plugin for [Claude Code](https://claude.ai/code).**
+**Get up to speed in any codebase, any size.**
 
-Session journaling. Task tracking. GitHub issue triage. Contribution checks. PR preparation. Knowledge base generation. All backed by SQLite, all running locally, all from your terminal.
+A non-opinionated workflow plugin for [Claude Code](https://claude.ai/code) that keeps track of what you're working on and what you need to do next. Session journaling, local task tracking, GitHub issue sync, and a handful of lifecycle hooks — all backed by a local SQLite database. Nothing leaves your machine.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-v1.0.33+-blueviolet)](https://claude.ai/code)
@@ -11,20 +11,20 @@ Built by [Doug Silkstone](https://contra.com/doug_silkstone)
 
 ---
 
-## Why This Exists
+## The Problem
 
-Claude Code is powerful, but sessions are ephemeral. You lose context when you close the terminal. You can't see what you did yesterday. You can't track what's in progress across sessions.
+You drop into an unfamiliar codebase. You start exploring, fixing bugs, shipping features. A few sessions later, you can't remember what you changed on Tuesday, which issue you were investigating, or what you decided to do next.
 
-**Workflow Toolkit fixes that.** It hooks into Claude Code's lifecycle events and silently records everything to a local SQLite database. Then it gives you skills to query, manage, and act on that data.
+Claude Code sessions are ephemeral. Context disappears when the terminal closes. There's no trail of what happened, no way to pick up where you left off, and no structure to keep things moving forward.
 
-The result: a structured, observable, repeatable development workflow that persists across sessions.
+**Workflow Toolkit gives you that structure** — without imposing opinions about how you work.
 
 ---
 
 ## Quick Start
 
 ```bash
-# Install from GitHub
+# Install from the marketplace
 /plugin marketplace add dougwithseismic/workflow-toolkit
 /plugin install workflow-toolkit@dougwithseismic
 
@@ -32,15 +32,15 @@ The result: a structured, observable, repeatable development workflow that persi
 claude --plugin-dir /path/to/workflow-toolkit
 ```
 
-That's it. The database initializes automatically on your first session.
+The database initializes automatically on your first session. No config files to edit, no setup steps.
 
 ---
 
-## What You Get
+## What It Does
 
-### Session Journaling (automatic)
+### 1. Journals Your Sessions (automatic)
 
-Every session is tracked automatically via lifecycle hooks. No action required from you.
+Lifecycle hooks fire silently in the background, recording every session to SQLite. When a session ends, you get a full summary:
 
 ```
 Session Summary: abc123
@@ -57,82 +57,72 @@ Ended:   2026-03-05 15:45:00
 | Journal Entries | 2     |
 
 Top Tools Used:
-Edit (52x)
-Read (41x)
-Bash (38x)
-Grep (27x)
-Glob (25x)
+Edit (52x)  Read (41x)  Bash (38x)  Grep (27x)  Glob (25x)
 ```
 
-Each session also gets a timestamped markdown file at `.claude/journal/entries/` for human-readable browsing.
+Each session also writes a timestamped markdown file to `.claude/journal/entries/` so you can browse history outside Claude Code.
 
-**Write manual entries when you want to capture context:**
-
-```
-> /workflow-toolkit:journal-write Refactored the auth module to use repository pattern
-```
+**Write manual entries when you want to capture decisions or context:**
 
 ```
-> /workflow-toolkit:journal-read search auth
+> /workflow-toolkit:journal-write Decided to use repository pattern for data access layer
+```
+
+**Search your history:**
+
+```
+> /workflow-toolkit:journal-read search repository
 
 id  timestamp            type    summary
---  -------------------  ------  ----------------------------------------
-14  2026-03-05 15:30:00  manual  Refactored auth module to repository pattern
- 9  2026-03-04 10:15:00  auto    Updated auth middleware error handling
+--  -------------------  ------  ------------------------------------------------
+14  2026-03-05 15:30:00  manual  Decided to use repository pattern for data access
+ 9  2026-03-04 10:15:00  auto    Refactored user queries into UserRepository
 ```
+
+You come back next week and run `/workflow-toolkit:journal-read last 5` — instant context on where you left off.
 
 ---
 
-### Task Tracking
+### 2. Tracks Your Tasks
 
-Local task management that lives alongside your code. SQLite for querying, markdown files for notes.
+Local task management that lives alongside your code. Create tasks, link them to GitHub issues, move them through a simple lifecycle.
 
-**Create a task:**
 ```
 > /workflow-toolkit:task-create Fix login redirect loop --priority high --tags "auth,bug" --issue 456
-```
-```
+
 Created task #7: Fix login redirect loop
-  Priority: high
-  Tags: auth, bug
-  Issue: #456
+  Priority: high | Tags: auth, bug | Issue: #456
   Folder: .claude/tasks/fix-login-redirect-loop/
 ```
 
-**Track progress:**
 ```
 > /workflow-toolkit:task-start 7
-
 Started task #7: Fix login redirect loop (priority: high)
 
-> /workflow-toolkit:task-done 7 Traced to missing session cookie on redirect
-
+> /workflow-toolkit:task-done 7 Root cause was missing session cookie on redirect
 Completed task #7: Fix login redirect loop
 Duration: 1h 23m
 ```
 
-**See what's active:**
 ```
 > /workflow-toolkit:task-list
 
-id  title                        status       priority  tags        issue  created_at
---  ---------------------------  -----------  --------  ----------  -----  -------------------
- 7  Fix login redirect loop      done         high      auth,bug    #456   2026-03-05 14:00:00
- 5  Add rate limiting to API     in-progress  medium    api         #412   2026-03-04 09:00:00
- 3  Write onboarding docs        todo         low       docs               2026-03-03 11:00:00
+id  title                        status       priority  issue  created_at
+--  ---------------------------  -----------  --------  -----  -------------------
+ 5  Add rate limiting to API     in-progress  medium    #412   2026-03-04 09:00:00
+ 3  Write onboarding docs        todo         low              2026-03-03 11:00:00
 
 2 active tasks (1 in-progress, 1 todo)
 ```
 
-Each task gets its own folder at `.claude/tasks/<slug>/TASK.md` where you can keep working notes, reproduction steps, or anything else.
+Each task gets a folder at `.claude/tasks/<slug>/TASK.md` — use it for reproduction steps, working notes, anything you want to persist.
 
 ---
 
-### GitHub Issue Tracking
+### 3. Syncs GitHub Issues Locally
 
-Sync issues from any GitHub repo into your local database. Triage offline. Never posts anything back to GitHub.
+Pull issues from any GitHub repo into your local database. Filter, prioritize, and annotate them without touching GitHub.
 
-**Sync issues:**
 ```
 > /workflow-toolkit:issues-sync --full --diff
 
@@ -147,66 +137,64 @@ State changes (1):
   #845 OPEN -> CLOSED: Fix memory leak in event listener
 ```
 
-**Filter and search:**
 ```
 > /workflow-toolkit:issues-list bugs
 
-#    title                                      labels       priority  status
----  -----------------------------------------  -----------  --------  ------
-891  WebSocket connection drops after idle       bug          unset     new
-889  Dark mode toggle doesn't persist            bug,ui       high      triaged
-872  CSV export truncates at 1000 rows           bug,data     medium    in-progress
+#    title                                      priority  status
+---  -----------------------------------------  --------  -----------
+891  WebSocket connection drops after idle       unset     new
+889  Dark mode toggle doesn't persist            high      triaged
+872  CSV export truncates at 1000 rows           medium    in-progress
 ```
 
-**Triage locally:**
 ```
 > /workflow-toolkit:issues-triage 891 priority critical
 > /workflow-toolkit:issues-triage 891 pick
 > /workflow-toolkit:issues-triage 891 note Likely related to keep-alive config in nginx
 ```
 
-**Investigate with the agent:**
+The `github-issues` agent handles bulk operations — ask it to triage everything from the last sync, find duplicates, or correlate issues with files in the codebase.
 
-The `github-issues` agent can handle bulk operations:
-```
-> @github-issues Triage all new issues from the last sync. Categorize by severity and suggest priorities.
-```
+**Strictly read-only.** Pulls data down, never posts or modifies anything on GitHub.
 
 ---
 
-### Contribution Workflow
+### 4. Checks Your Work Before You Push
 
-Pre-flight checks before you push. PR drafting that stops for your review.
+Run pre-flight checks before pushing. Validates diff size, commit format, linting, types, and basic code quality.
 
-**Run contribution checks:**
 ```
 > /workflow-toolkit:contribution-check
 
-## Contribution Check Results
+| Check         | Status | Notes                          |
+|---------------|--------|--------------------------------|
+| Diff size     | PASS   | 8 files, +187 -42 lines       |
+| Commit format | PASS   | fix: handle timezone edge case |
+| File naming   | PASS   |                                |
+| Code quality  | WARN   | 1 potential issue found        |
+| Lint          | PASS   |                                |
+| Type check    | PASS   |                                |
+| Tests         | WARN   | 2 files missing test coverage  |
 
-| Check                  | Status | Notes                          |
-|------------------------|--------|--------------------------------|
-| Diff size              | PASS   | 8 files, +187 -42 lines       |
-| Commit format          | PASS   | fix: handle timezone edge case |
-| File naming            | PASS   |                                |
-| Code quality           | WARN   | 1 potential issue found        |
-| Lint                   | PASS   |                                |
-| Type check             | PASS   |                                |
-| Tests                  | WARN   | 2 files missing test coverage  |
-
-### Action Items
+Action Items:
 - [ ] Add tests for src/utils/timezone.ts
 - [ ] Review nested conditional at src/handlers/booking.ts:142
 ```
 
-**Prepare a PR:**
+Auto-detects your project's linter and type checker. Works with any stack.
+
+---
+
+### 5. Drafts Your PRs
+
+Generates a complete PR with title, body, and checklist — then **stops and waits for you**.
+
 ```
 > /workflow-toolkit:pr-prepare 456
 
-## PR Ready for Review
+PR Ready for Review
 
 Title: fix: resolve login redirect loop caused by missing session cookie
-
 Base: main <- fix/login-redirect-loop
 
 Body:
@@ -216,16 +204,16 @@ is set before the redirect fires...
 
 ---
 
-### Next steps (requires your approval):
-1. Push branch: `git push -u origin fix/login-redirect-loop`
-2. Create PR: `gh pr create --draft --title "..." --body "..."`
+Next steps (requires your approval):
+1. Push branch: git push -u origin fix/login-redirect-loop
+2. Create PR: gh pr create --draft --title "..." --body "..."
 ```
 
-It **stops here**. Nothing gets pushed until you explicitly say "go ahead."
+Nothing gets pushed until you explicitly say "go ahead." If the project has a `.github/PULL_REQUEST_TEMPLATE.md`, it uses that template automatically.
 
 ---
 
-### Knowledge Base Generation
+### 6. Builds Your Knowledge Base
 
 Turn implicit codebase knowledge into structured reference docs.
 
@@ -233,71 +221,98 @@ Turn implicit codebase knowledge into structured reference docs.
 > /workflow-toolkit:distill-concept react-hooks
 ```
 
-Analyzes the codebase, finds real patterns across multiple files, and generates a structured markdown doc at `knowledge-base/react-hooks.md` with actual code snippets, file paths, conventions, and gotchas.
+Searches the codebase, reads representative files, identifies patterns, and generates a structured doc at `knowledge-base/react-hooks.md` with real code snippets, actual file paths, conventions, and gotchas. Not generic best practices — patterns from *this* codebase.
 
 ---
 
-### Skill & Agent Scaffolding
+### 7. Scaffolds More Extensions
 
-Build more Claude Code extensions from within Claude Code.
+Build new Claude Code skills and agents from within Claude Code.
 
 ```
 > /workflow-toolkit:create-skill deploy-preview "Deploy a preview branch to staging"
-> /workflow-toolkit:create-agent security-scanner "Scan code for OWASP top 10 vulnerabilities"
-> /workflow-toolkit:skill-and-agent-factory both code-review "Quick inline review + thorough isolated analysis"
+> /workflow-toolkit:create-agent security-scanner "Scan for OWASP top 10 vulnerabilities"
 ```
 
-Each generates properly structured files with YAML frontmatter, best-practice patterns, and validation.
+Generates properly structured files with YAML frontmatter and best-practice patterns. The factory skill (`/workflow-toolkit:skill-and-agent-factory`) can create coordinated skill-agent pairs that work together.
 
 ---
 
-## Architecture
-
-### How Data Flows
+## How It Works
 
 ```
 Claude Code Lifecycle Events
         |
         v
-  Hooks (bash scripts)
+  Hooks (bash scripts)           <- silent, automatic
         |
         v
-  SQLite Database (.claude/journal/journal.db)
+  SQLite Database                <- .claude/journal/journal.db
         |
         v
-  Skills (query & display)    Markdown Files (human-readable)
+  Skills (query & act)           <- you invoke these
+  Markdown Files                 <- human-readable summaries
 ```
 
 ### What the Hooks Capture
 
-| Hook | Event | What it records |
-|------|-------|-----------------|
-| `SessionStart` | New session begins | Session ID, start time |
+| Hook | Fires when | Records |
+|------|-----------|---------|
+| `SessionStart` | Session begins | Session ID, start time |
 | `Stop` | Each response completes | Prompt count increment |
-| `PostToolUse` | Any Write/Edit/Bash call | Tool name, file path |
-| `SubagentStop` | Subagent finishes | Subagent count increment |
-| `PreCompact` | Context window compaction | Compaction snapshot |
-| `TaskCompleted` | Background task finishes | Task summary as journal entry |
-| `SessionEnd` | Session closes | End time, reason, full summary markdown |
+| `PostToolUse` | Write/Edit/Bash used | Tool name, file path |
+| `SubagentStop` | Subagent finishes | Subagent count |
+| `PreCompact` | Context compaction | Compaction snapshot |
+| `TaskCompleted` | Background task done | Task summary as journal entry |
+| `SessionEnd` | Session closes | Full summary (SQLite + markdown) |
 
-### Database Schema
+### Database Tables
 
-Six tables in a single SQLite file:
+| Table | What it stores |
+|-------|---------------|
+| `sessions` | Per-session metrics (prompts, tool uses, subagents, compactions) |
+| `entries` | Journal entries — auto-generated and manual |
+| `tool_usage` | Every tool invocation with file paths |
+| `compaction_snapshots` | Context compaction events |
+| `github_issues` | Synced issues with local triage metadata |
+| `tasks` | Local tasks with status, priority, and timestamps |
 
-| Table | Purpose | Key columns |
-|-------|---------|-------------|
-| `sessions` | Per-session metrics | prompts, tool uses, subagents, compactions |
-| `entries` | Journal entries (auto + manual) | timestamp, type, summary, details |
-| `tool_usage` | Every tool invocation | tool name, file path, session |
-| `compaction_snapshots` | Context compaction events | trigger type, session |
-| `github_issues` | Synced GitHub issues + local triage | state, labels, priority, tracking status, notes |
-| `tasks` | Local task tracking | status, priority, tags, linked issue, timestamps |
+All data lives at `$CLAUDE_PROJECT_DIR/.claude/journal/`. Per-project, local-only.
 
-### Data Storage
+---
 
-All data is stored **per-project** at `$CLAUDE_PROJECT_DIR/.claude/journal/`. Nothing leaves your machine. Nothing is shared unless you commit the journal folder (which you probably shouldn't).
+## All Skills
 
-The database auto-initializes on first `SessionStart`. No setup required.
+| Skill | What it does |
+|-------|-------------|
+| `journal-write` | Write a manual journal entry |
+| `journal-read` | Query journal history (recent, search, by date) |
+| `task-create` | Create a task with priority, tags, linked issue |
+| `task-list` | List/filter tasks by status or priority |
+| `task-view` | Full task details with TASK.md notes |
+| `task-update` | Update any task field |
+| `task-start` | Mark a task as in-progress |
+| `task-done` | Mark a task as complete |
+| `issues-sync` | Sync GitHub issues into local DB |
+| `issues-list` | Filter/search synced issues |
+| `issues-view` | Full issue details with local metadata |
+| `issues-triage` | Set priority, status, or add notes |
+| `distill-concept` | Generate knowledge base from codebase patterns |
+| `contribution-check` | Pre-push validation checklist |
+| `pr-prepare` | Draft a PR and stop for review |
+| `create-skill` | Scaffold a new Claude Code skill |
+| `create-agent` | Scaffold a new Claude Code agent |
+| `skill-and-agent-factory` | Create coordinated skill + agent pairs |
+| `db-viewer` | Open the SQLite database in a GUI |
+
+All skills are invoked as `/workflow-toolkit:<skill-name>`.
+
+## Agents
+
+| Agent | Purpose |
+|-------|---------|
+| `contribution-guard` | Read-only code reviewer. Checks diffs against project rules. Never modifies anything. |
+| `github-issues` | Issue research, bulk triage, and codebase correlation. |
 
 ---
 
@@ -307,42 +322,22 @@ The database auto-initializes on first `SessionStart`. No setup required.
 workflow-toolkit/
 ├── .claude-plugin/
 │   └── plugin.json              # Plugin manifest
-├── skills/                      # 17 skills
-│   ├── journal-write/           # Write manual journal entries
-│   ├── journal-read/            # Query journal history
-│   ├── task-create/             # Create tracked tasks
-│   ├── task-list/               # List/filter tasks
-│   ├── task-view/               # Full task details
-│   ├── task-update/             # Update task fields
-│   ├── task-start/              # Mark task in-progress
-│   ├── task-done/               # Mark task complete
-│   ├── issues-sync/             # Sync GitHub issues locally
-│   ├── issues-list/             # Filter/search issues
-│   ├── issues-view/             # Full issue details
-│   ├── issues-triage/           # Set priority/status/notes
-│   ├── distill-concept/         # Generate knowledge base entries
-│   ├── create-skill/            # Scaffold new skills
-│   ├── create-agent/            # Scaffold new agents
-│   ├── skill-and-agent-factory/ # Unified extension factory
-│   ├── contribution-check/      # Pre-push validation
-│   ├── pr-prepare/              # Draft PRs for review
-│   └── db-viewer/               # Open DB in GUI viewer
+├── skills/                      # 19 skills (each a folder with SKILL.md)
 ├── agents/                      # 2 specialized agents
-│   ├── contribution-guard.md    # Read-only code reviewer
-│   └── github-issues.md         # Issue research & bulk ops
+│   ├── contribution-guard.md
+│   └── github-issues.md
 ├── hooks/                       # 8 lifecycle hooks
 │   ├── hooks.json               # Hook configuration
 │   ├── init-journal-db.sh       # Database schema & init
-│   ├── session-start-hook.sh    # Record session start
-│   ├── journal-hook.sh          # Increment prompt count
-│   ├── session-end-hook.sh      # Write session summary
-│   ├── pre-compact-hook.sh      # Record compaction
-│   ├── tool-use-hook.sh         # Log tool invocations
-│   ├── subagent-stop-hook.sh    # Track subagent usage
-│   └── task-completed-hook.sh   # Record task completions
+│   ├── session-start-hook.sh
+│   ├── journal-hook.sh
+│   ├── session-end-hook.sh
+│   ├── pre-compact-hook.sh
+│   ├── tool-use-hook.sh
+│   ├── subagent-stop-hook.sh
+│   └── task-completed-hook.sh
 ├── scripts/
 │   └── sync-issues.js           # GitHub issue sync engine
-├── .gitignore
 └── README.md
 ```
 
@@ -350,33 +345,28 @@ workflow-toolkit/
 
 ## Prerequisites
 
-| Dependency | Required for | Install |
-|------------|-------------|---------|
+| Dependency | What for | Install |
+|------------|----------|---------|
 | [Claude Code](https://claude.ai/code) v1.0.33+ | Everything | `npm i -g @anthropic-ai/claude-code` |
-| `sqlite3` | Hooks, skills | Most systems have it. `brew install sqlite3` / `scoop install sqlite3` |
+| `sqlite3` | Hooks & skills | Most systems have it. `brew install sqlite3` / `scoop install sqlite3` |
 | `jq` | Hook JSON parsing | `brew install jq` / `scoop install jq` |
-| `gh` | GitHub issue features | `brew install gh` / `scoop install gh`, then `gh auth login` |
+| `gh` | GitHub issue sync | `brew install gh` / `scoop install gh` + `gh auth login` |
 
 ---
 
-## Safety Guarantees
-
-This plugin is designed to be safe by default:
+## Safety
 
 - **Never pushes code** or creates PRs without your explicit consent
-- **Never posts to GitHub** — issue tracking is strictly read-only (pull only)
-- **Never modifies your files** during contribution checks — read and report only
-- **All data stays local** to your project directory
-- **No network calls** except `gh` CLI for issue sync (which you trigger manually)
-- **No secrets or credentials** are stored or transmitted
+- **Never posts to GitHub** — issue sync is strictly read-only
+- **Never modifies files** during checks — read and report only
+- **All data stays local** to the project directory
+- **No telemetry, no network calls** except `gh` CLI when you manually sync issues
 
 ---
 
 ## Contributing
 
-Contributions welcome. Fork it, make your changes, open a PR.
-
-If you build something cool with this plugin, I'd love to hear about it.
+Contributions welcome. Fork it, improve it, open a PR.
 
 ---
 
