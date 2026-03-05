@@ -1,5 +1,5 @@
 ---
-name: setup
+name: workspace-db-setup
 description: Initialize and verify the workflow-toolkit environment. Checks SQLite availability, creates the journal database, verifies directory structure, checks gh CLI auth, and reports readiness. Run this after installing the plugin or when troubleshooting.
 argument-hint: [--force]
 disable-model-invocation: true
