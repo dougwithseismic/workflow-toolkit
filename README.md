@@ -11,6 +11,10 @@ Built by [Doug Silkstone](https://contra.com/doug_silkstone)
 
 ---
 
+> **A note on slash commands:** This README is full of examples like `/workflow-toolkit:task-create` and `/workflow-toolkit:journal-read`. You don't have to use them that way. In fact, **I'd recommend you don't** — at least not at first. Just talk to Claude in natural language. Say "create a task for fixing the login bug" or "what did I work on yesterday?" and the skills will fire automatically when they're relevant. The slash commands are there when you know exactly what you want. Natural language is there for everything else. The best part of this plugin is that you can extend it and make it your own — the skills are just starting points.
+
+---
+
 ## The Problem
 
 You drop into an unfamiliar codebase — maybe it's a monorepo with 200 packages, maybe it's a legacy app with zero documentation. You start exploring, fixing bugs, shipping features. A few sessions later you can't remember what you changed on Tuesday, which issue you were investigating, or what you decided to do next.
