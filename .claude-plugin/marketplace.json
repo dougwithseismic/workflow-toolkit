@@ -11,7 +11,7 @@
   "plugins": [
     {
       "name": "workflow-toolkit",
-      "source": ".",
+      "source": "./",
       "description": "Get up to speed in any codebase, any size. Session journaling, local task tracking, GitHub issue sync, knowledge base generation, and lifecycle hooks. All backed by SQLite, all local.",
       "version": "1.0.0",
       "author": {
