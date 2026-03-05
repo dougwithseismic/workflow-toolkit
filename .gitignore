@@ -1,0 +1,11 @@
+# Journal data (per-project, not shipped with plugin)
+journal/
+*.db
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
